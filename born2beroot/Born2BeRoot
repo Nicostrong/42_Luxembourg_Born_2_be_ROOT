@@ -1,0 +1,141 @@
+# **************************************************************************** #
+#                                                                              #
+#                                                         :::      ::::::::    #
+#    Born2BeRoot                                        :+:      :+:    :+:    #
+#                                                     +:+ +:+         +:+      #
+#    By: nfordoxc <nfordoxc@42luxembourg.lu>        +#+  +:+       +#+         #
+#                                                 +#+#+#+#+#+   +#+            #
+#    Created: 2024/03/08 13:54:02 by nfordoxc          #+#    #+#              #
+#    Updated: 2024/03/08 15:15:19 by nfordoxc         ###   ########.fr        #
+#                                                                              #
+# **************************************************************************** #
+
+1.	lancer virtualbox
+2.	new
+3.	expert mode
+4.	Name				=>	nfordoxc42
+	Folder				=>	sgoinfre
+	Iso					=>	debian-12.5.0
+5.	check Skip Unattended Installation
+6.	Hardware nothing
+7.	Hard disk 			=> 3 Go
+8.	Finish
+
+############################
+##         START          ##
+############################
+
+installation graphique	=>	francais
+clavier 				=>	suisse romand (qwertz)
+nom machine				=>	nfordoxc42
+Domaine					=>	NULL
+pwd_root				=>	Born2BeNico
+
+nouvel utilisateur :
+
+name		=>	nfordoxc
+pwd_user	=>	Nicostrong54
+
+############################
+##    PARTITIONNEMENT     ##
+############################
+
+Partition boot 1:
+	Manuel
+	select HD
+	creer partition
+	primary 			=>	500Mo debut
+	point amorcage 		=>	/boot
+	label 				=>	boot
+	fin
+
+Partition chiffre 2 :
+	selectionner la partition 
+	nouvelle partition
+	taille				=>	max
+	type				=>	logique
+	debut
+	fin
+
+Crypter la partition 2 :
+	configurer des volumes chiffres
+	oui
+	creer des volumes chiffres
+	selectionner la partition 2
+	terminer
+	fin
+	oui
+	phrase secrete		=>	Phrase sec7
+
+############################
+##       CONFIG LVM       ##
+############################
+
+configurer LVM
+oui
+creer un groupe de volumes
+nom						=>	LVMGroup
+choisir la partition crypte
+
+creer volume logique
+choisir LVMGroup
+nom						=>	root
+taille					=>	500MB
+utiliser comme			=>	ext4
+point montage			=>	/
+etiquette				=>	root
+
+
+creer volume logique
+choisir LVMGroup
+nom						=>	swap
+taille					=>	300MB
+utiliser comme			=>	swap
+
+creer volume logique
+choisir LVMGroup
+nom						=>	home
+taille					=>	500MB
+utiliser comme			=>	ext4
+point montage			=>	/home
+etiquette				=>	home
+
+
+creer volume logique
+choisir LVMGroup
+nom						=>	var
+taille					=>	200MB
+utiliser comme			=>	ext4
+point montage			=>	/var
+etiquette				=>	var
+
+
+creer volume logique
+choisir LVMGroup
+nom						=>	srv
+taille					=>	300MB
+utiliser comme			=>	ext4
+point montage			=>	/srv
+etiquette				=>	srv
+
+
+creer volume logique
+choisir LVMGroup
+nom						=>	tmp
+taille					=>	425MB
+utiliser comme			=>	ext4
+point montage			=>	/tmp
+etiquette				=>	tmp
+
+
+creer volume logique
+choisir LVMGroup
+nom						=>	var-log
+taille					=>	486MB
+utiliser comme			=>	ext4
+point montage			=>	autre	=>	/var/log
+etiquette				=>	var-log
+
+############################
+##       FIN CONFIG       ##
+############################

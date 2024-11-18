@@ -1,0 +1,227 @@
+############################
+##   CONFIG  SERVICES     ##
+############################
+
+Lancer la VM
+Entrer la phrase secrete de decryptage:
+	~$ phrase secrete
+	
+se connecter directement en root
+	si connecte avec user => su -l (entrer le pass root)
+	~$ su -l
+	
+Mettre a jour apt :
+	~$ apt update
+	~$ apt upgrade
+
+############################
+##     INSTALL VIM        ##
+############################
+
+Installer vim :
+	~$ apt install vim
+
+############################
+##     INSTALL SUDO       ##
+############################
+
+Installer sudo :
+	~$ apt install sudo
+
+Ajouter notre user au groupe sudo :
+	~$ sudo usermod -aG sudo nfordoxc
+
+Quitter la session root:
+	~$ exit
+
+Se connecter avec notre username :
+	~$ nfordoxc
+	~$ psw de nfordoxc
+
+Verifier que nous somme bien dans le groupe sudo
+	~$ sudo whoami
+	~$ sudo id -Gn
+	=> doit afficher root
+	si n'affiche pas root => modifier le fichier sudoers en ajoutant cette commande :
+		username	ALL=(ALL:ALL) ALL
+
+Modification du fichier sudoers.tmp
+	~$ sudo visudo
+
+Ajouter ses regles pour l'utilisation de sudo:
+	Defaults	passwd_tries=3	// limite le nb d'essais a 3 fois
+	Defaults	badpass_message="Message"	// Affiche un message personnalise
+	Defaults	logfile="/var/log/sudo/sudo.log"	// chemin pour le journal sudo
+	Defaults	log_input	// enregistre les entrees des commandes sudo
+	Defaults	log_output	// enregistre les sorties des commandes sudo
+	Defaults	requiretty	// obligation d'utiliser le terminal avec sudo
+
+Si le dossier "/var/log/sudo" n'existe pas => ~$ sudo mkdir /var/log/sudo
+
+############################
+##      INSTALL UFW       ##
+############################
+
+Installer ufw (firewall) :
+	~$ sudo apt install ufw
+
+Activer ufw :
+	~$ sudo ufw enable
+
+Vérifier le status de ufw :
+	~$ sudo ufw status verbose
+
+############################
+##         UFW            ##
+############################
+
+Pour ouvrir ou fermer un port
+	~$ sudo ufw allow <port>
+	~$ sudo ufw deny <port>
+
+Pour retirer une regle sur un port
+	~$ sudo ufw delete allow <port>
+	~$ sudo ufw delete deny <port>
+ou
+	~$ sudo ufw status numbered
+	~$ sudo ufw delete <port index number>
+
+############################
+##         SSH            ##
+############################
+
+Installer ssh :
+	~$ sudo apt install openssh-server
+
+Vérification que le ssh est installe et actif
+	~$ sudo systemctl status ssh
+	ou
+	~$ sudo service ssh status
+
+Modifier le port d'écoute de ssh:
+	~$ sudo vim /etc/ssh/sshd_config
+
+Modifier la ligne "#Port 22" => "Port 4242"
+Redemarrer le service ssh :
+	~$ sudo systemctl restart ssh
+
+Ajouter le port 4242 a ufw :
+	~$ sudo ufw allow 4242
+
+Redemarrer la vm :
+	~$ sudo reboot
+
+Dans les settings de la VM :
+	Settings // Network // Adaptater 1 // Advenced // Port Forwarding
+	Ajouter le port 4242 :
+		Host port	: 6666
+		Guest port	: 4242
+
+Faire un reboot de la VM :
+	~$ sudo reboot
+	
+Se connecter via le terminal a la VM :
+	~$ ssh <login>@localhost -p 6666
+	ou
+	~$ ssh <login>@127.0.0.1 -p 6666
+	
+	Entrer le pwd du login
+	une fois connecter se deconnecter :
+		~$ exit
+
+
+############################
+##      PWD SETTING       ##
+############################
+
+Editer le fichier /etc/login.defs
+	PASS_MAX_DAYS	30	// nbr de jours maxi pwd utilise
+	PASS_MIN_DAYS	2	// nbr de jours min entre 2 changement de pwd
+	PASS_WARN_AGE	7	// nbr de jours avant expiration (rappel)
+
+	ou utiliser la commande "chage"
+		~$ sudo chage -M 30 <username>
+		~$ sudo chage -m 2 <username>
+		~$ sudo chage -W 7 <username>
+
+Installer une lib de vérificatoin des pwd :
+	~$ sudo apt install libpam-pwquality
+
+Editer le fichier /etc/security/pwquality.conf
+	difok 				= 7		// nbr de char different de l ancien pwd
+	minlen 				= 10	// longueur min du pwd
+	dcredit 			= -1	// nbr min de digit
+	ucredit 			= -1	// nbr min de char en Maj
+	lcredit 			= -1	// nbr min de char en min
+	maxrepeat 			= 3		// nbr maxi de repetition consecutive d un meme char
+	usercheck 			= 1		// ne doit pas contenir username
+	retry 				= 3		// nbr d essai
+	enforce_for_root
+
+Changer le mot de pass de user et root :
+	~$ sudo passwd <username>
+
+############################
+##  HOSTNAME/USERS/GROUPS ##
+############################
+
+Modifier Le nom du Hostname :
+	~$ sudo hostnamectl set-hostname <new_hostname>
+Et vérifier le changement :
+	~$ hostnemectl status
+
+***************************
+
+Creer un nouvel user :
+	~$ sudo useradd <username>
+Renommer un user :
+	~$ sudo usermod -l <user_name> <new_user_name>
+attribuer un groupe :
+	~$ sudo usermod -g <group_name> <username> 
+Supprimer un user :
+	~$ userdel -r <user_name>
+Afficher la liste des users :
+	~$ users
+	ou
+	~$ cat /etc/passwd | cut -d ":" -f 1
+
+***************************
+
+Creer un nouveau groupe :
+	~$ sudo groupadd <name_group>
+
+Ajouter un user dans un groupe :
+	~$ sudo gpasswd -a <username> <group_name>
+
+Supprimer un user d un groupe :
+	~$ sudo gpasswd -d <username> <group_name>
+
+Supprimer un groupe :
+	~$ sudo groupdel <group_name>
+
+Lister tout les groupes :
+	~$ getent group
+
+############################
+##      MONITORING        ##
+############################
+
+Creer le script bash dans /root.
+	~$ vim monitoring.sh
+
+Lui donner les droits d'executions :
+	~$ chmod 755 monitoring.sh
+
+L'executer pour test :
+	~$ ./monitoring.sh
+
+Pour afficher le log toute les 10 minutes
+il faut activer le cron :
+	~$ sudo systemctl enable cron
+
+Parametrer cron :
+	~$ sudo crontab -e
+	et editer le fichier crontab :
+		*/10  *  *  *  * bash /root/monitoring.sh
+
+	

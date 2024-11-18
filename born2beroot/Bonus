@@ -1,0 +1,235 @@
+############################
+##         BONUS          ##
+############################
+
+############################
+##       WORDPRESS        ##
+############################
+
+Installer le repo sury d'apt :
+	~$ sudo apt update
+	~$ sudo apt install curl
+	~$ sudo curl -sSL https://packages.sury.org/php/README.txt | sudo bash -x
+	~$ sudo apt upgrade
+	
+############################
+##         PHP            ##
+############################
+
+Installer PHP8.3 (04/2024)
+	~$ sudo apt install php8.3
+	~$ sudo apt install php-common php-cgi php-cli php-mysql
+
+Vérifier la version de php :
+	~$ php -v
+
+Vérifier qu'Apach n'a pa été installé:
+	~$ systemctl status apach2
+	Si installer :
+		~$ sudo apt purge apach2
+		
+############################
+##       LIGHTTPD         ##
+############################
+
+Installer Lighttpd :
+	~$ sudo apt install lighttpd
+
+Vérifier la version :
+	~$ sudo lighttpd -v
+
+Démarrer le service :
+	~$ sudo service lighttpd start
+
+Autoriser le port 80 sur le firewall :
+	~$ sudo ufw allow http
+Vérifier :
+	~$ sudo ufw status
+
+Dans les settings de la VM :
+	Settings // Network // Adaptater 1 // Port Forwarding
+	Ajouter la regle :
+		http || 127.0.0.1 ||host = 8080 || guest = 80
+Redemarrer la VM :
+	~$ sudo reboot
+
+Activer les modules Fastcgi de lighttpd :
+	~$ sudo lighty-enable-mod fastcgi		// gestion intelligente des processus
+	~$ sudo lighty-enable-mod fastcgi-php	// sderveur php
+	~$ sudo service lighttpd force-reload	// relancer le service
+
+############################
+##        MARIADB         ##
+############################
+
+Installation de MariaDB :
+	~$ sudo apt install mariadb-server
+
+Démarrer et activer le service mariaDB :
+	~$ sudo systemctl start mariadb
+	~$ sudo systemctl enable mariadb
+
+Vérifier le service :
+	~$ sudo service mariadb status
+	
+############################
+##          MySQL         ##
+############################
+
+Installation de MySQL secure :
+	~$ sudo mysql_secure_installation
+
+	Répondre aux questions :
+		Enter current password for root (enter for none): <Enter>
+		Switch to unix_socket authentication [Y/n]: Y
+		Set root password? [Y/n]: Y
+		New password: *#06#Nico
+		Re-enter new password: *#06#Nico
+		Remove anonymous users? [Y/n]: Y
+		Disallow root login remotely? [Y/n]: Y
+		Remove test database and access to it? [Y/n]:  Y
+		Reload privilege tables now? [Y/n]:  Y
+
+Redémarrer le service mariaDB :
+	~$ systemctl restart mariadb
+
+Configurer MariaDB :
+	~$ mysql -u root -p
+	Entrer le mot de pass root de MariaDB.
+	Creer la base de données pour Wordpress :
+		MariaDB [(none)]> CREATE DATABASE wordpress_db;
+		MariaDB [(none)]> CREATE USER 'admin'@'localhost' IDENTIFIED BY 'WPpassw0rd';
+		MariaDB [(none)]> GRANT ALL ON wordpress_db.* TO 'admin'@'localhost' IDENTIFIED BY 'WPpassw0rd' WITH GRANT OPTION;
+		MariaDB [(none)]> FLUSH PRIVILEGES;
+		MariaDB [(none)]> EXIT;
+
+Vérifier que la BDD a été créée :
+	~$ mysql -u root -p
+	
+	Afficher la BDD :
+		MariaDB [(none)]> show databases;
+		
+		On doit avoir :
+			+--------------------+
+			| Database           |
+			+--------------------+
+			| information_schema |
+			| mysql              |
+			| performance_schema |
+			| sys                |
+			| wordpress_db       |
+			+--------------------+
+
+############################
+##       WORDPRESS        ##
+############################
+
+Installation de WordPress :
+	Installation de 2 outils :
+		~$ sudo apt install wget	// outils pour télécharger des fichiers d'internet
+		~$ sudo apt install tar		// outils pour décompresser des archives
+		
+	Se placer dans le dossier /var/www/html/ :
+		~$ cd /var/www/html/
+	
+	Télécharger l'archive wordpress :
+		~$ wget http://wordpress.org/latest.tar.gz
+	Décompresser l'archive :
+		~$ tar -xzvf latest.tar.gz
+	Déplacer le contenue du dossier wordpress :
+		~$ sudo mv wordpress/* /var/www/html/
+	Supprimer l'archive et la dossier vide :
+		~$ rm -rf latest.tar.gz wordpress/
+	
+	Créer un fichier de configuration de wordpress :
+		~$ sudo mv /var/www/html/wp-config-sample.php /var/www/html/wp-config.php
+
+	Editer le fichier de config :
+		<?php
+		/* ... */
+		/** The name of the database for WordPress */
+		define( 'DB_NAME', 'wordpress_db' );
+
+		/** Database username */
+		define( 'DB_USER', 'admin' );
+
+		/** Database password */
+		define( 'DB_PASSWORD', 'WPpassw0rd' );
+
+		/** Database host */
+		define( 'DB_HOST', 'localhost' );
+	
+	Changer les droits du dossier wordpress :
+		~$ sudo chown -R www-data:www-data /var/www/html/
+		~$ sudo chmod -R 755 /var/www/html/
+	
+	Redémarrer le service lighttpd :
+		~$ sudo systemctl restart lighttpd
+	
+	Ouvrir navigateur web :
+		127.0.0.1:8080 => finaliser l'installation
+			Titre du site	=>	Born2BeRoot
+			Identifiant		=>	nfordoxc
+			Mot de Passe	=>	*Nicostrong54
+			email			=> nfordoxc@student.42luxembourg.lu
+
+############################
+##        VSFTPD          ##
+############################
+
+Installation de VsFtpd :
+	Vsftpd est un service de ftp
+	Installation :
+		~$ sudo apt install vsftpd
+	
+	Démarrage :
+		~$ sudo systemctl start vsftpd
+	Activation :
+		~$ sudo systemctl enable vsftpd
+	Vérification :
+		~$ sudo service vsftpd status
+	Ouvrir les ports de ufw :
+		~$ sudo ufw allow 20/tcp
+		~$ sudo ufw allow 21/tcp
+	Vérifier le status de UFW:
+		~$ sudo ufw status
+	
+	Editer le fichier de comfiguration /etc/vsftpd.conf :
+		Pour verouiller les users dans leurs dossiers racine :
+			user_sub_tocken=$USER
+			local_root=/home/$USER/ftp
+		Message personnalisé :
+			ftpd_banner=Bienvenue sur le serveur ftp Born2BeRoot	// message acceuil
+		Pour permettre des utilisateurs anonymes de se connecter au serveur en lecture seule :
+			anonymous_enable=YES
+			anon_upload_enable=NO
+			anon_mkdir_write_enable=NO
+			anon_other_write_enable=NO
+			anon_world_readable_only=YES
+			anon_root=<Path_du_répertoire_anonyme>
+		Pour permettre à vos utilisateurs locaux de se connecter au serveur et d'écrire :
+			local_enable=YES
+			write_enable=YES
+			local_umask=022
+		Pour permettre à vsftpd de charger une liste d'utilisateurs décommentez la ligne :
+			userlist_enable=YES
+
+	Créer la liste des user ayant l'access :
+		~$ sudo vim /etc/vsftpd.userlist
+
+	Créer le dossier vsftpd dans /etc/
+		~$ sudo mkdir /etc/vsftpd
+
+	Créer le fichier chroot.list
+		~$ sudo vim /etc/vsftpd/chroot.list
+	Y mettre le nom des users avec les droits Administrateur
+
+	Modifier /etc/vsftpd.conf :
+		~$ sudo vim /etc/vsftpd.conf
+		chroot_local_user=NO	// Pas besoin d'avoir un accès root
+		chroot_list_enable=YES	// Emprisonner dans son répertoire home les utilisateurs
+		chroot_list_file=/etc/vsftpd.chroot_list	//La lise des prisonniers
+		allow_writeable_chroot=YES
+	
+	Se connecter via le terminal :
+		~$ ftp 127.0.0.1 -p 2121
